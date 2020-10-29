@@ -69,13 +69,13 @@ function New-AutoDeployVM {
     Set-VMDvdDrive -VMName $Name -ComputerName $VMHost -Path $ISOPath
 
     # Create the virtual hard disk
-    $VHDPath = "$FullPath\VHD\$Name.vhdx"
+    $VHDPath = "$VMDir\$Name.vhdx"
     New-VHD -ComputerName $VMHost -Path $VHDPath -Dynamic -SizeBytes 40GB
     Add-VMHardDiskDrive -ComputerName $VMHost -VMName $Name -Path $VHDPath
 
     # Hyper-V generates a semi-random MacAddress at first boot
     Start-VM -ComputerName $VMHost -Name $Name
-    Stop-VM -ComputerName $VMHost -Name $Name
+    Stop-VM -ComputerName $VMHost -Name $Name -TurnOff
     $MacAddress = (Get-VMNetworkAdapter -VMName $Name -ComputerName $VMHost).MacAddress
     Get-VMNetworkAdapter -VMName $Name -ComputerName $VMHost | Set-VMNetworkAdapter -StaticMacAddress $MacAddress
 
