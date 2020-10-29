@@ -83,6 +83,7 @@ function New-AutoDeployVM {
     $IPAddress = Get-DhcpServerv4FreeIPAddress -ScopeId $SubnetAddress
     Add-DhcpServerv4Reservation -IPAddress $IPAddress -ScopeId $SubnetAddress -ClientId $MacAddress `
         -Name $Name -Description "Auto generated lease for VM autodeploy"
+    Add-DhcpServerv4Filter -List Allow -MacAddress $MacAddress -Description $Name
 
     # Register in DNS
     Add-DnsServerResourceRecordA -Name $Name -CreatePtr -AllowUpdateAny -IPv4Address $IPAddress -AgeRecord -ZoneName ServerCademy.local
