@@ -48,32 +48,34 @@ function New-AutoDeployVM {
     $VMDir = "D:\AutoDeployVMS\$Name"
     Invoke-Command -ComputerName $VMHost -ScriptBlock {
         param($Path)
-        New-Item -Path $Path -ItemType Directory | Out-Null
-        New-Item -Path "$Path\VM" -ItemType Directory | Out-Null
+        New-Item -Path $Path -ItemType Directory
+        New-Item -Path "$Path\VM" -ItemType Directory
     } -Args $VMDir
 
     # Creating the VM with all the required bells and whistles
     New-VM -Name $Name -ComputerName $VMHost `
     -NoVHD -Path "$VMDir\VM" `
     -MemoryStartupBytes $StartUpRam -SwitchName $SwitchName `
-    -Generation 2 -BootDevice "CD" | Out-Null
+    -Generation 2 -BootDevice "CD"
 
     Set-VM -Name $Name -ComputerName $VMHost -ProcessorCount $CPUCount `
     -AutomaticStartAction $AutomaticStartAction -AutomaticStopAction $AutomaticStopAction `
-    -AutomaticStartDelay $AutomaticStartDelay -Notes $Notes | Out-Null
+    -AutomaticStartDelay $AutomaticStartDelay -Notes $Notes
 
     if ($DynamicRam) {
-        Set-VM -Name $Name -ComputerName $VMHost -DynamicMemory -MemoryMinimumBytes $MinRam -MemoryMaximumBytes $MaxRam | Out-Null
+        Set-VM -Name $Name -ComputerName $VMHost -DynamicMemory -MemoryMinimumBytes $MinRam -MemoryMaximumBytes $MaxRam
     }
-    Set-VMFirmware -VMName $Name -ComputerName $VMHost -EnableSecureBoot $true -SecureBootTemplate "MicrosoftUEFICertificateAuthority"
+    Set-VMFirmware -VMName $Name -ComputerName $VMHost -EnableSecureBoot On -SecureBootTemplate "MicrosoftUEFICertificateAuthority"
     Set-VMDvdDrive -VMName $Name -ComputerName $VMHost -Path $ISOPath
 
     # Create the virtual hard disk
     $VHDPath = "$FullPath\VHD\$Name.vhdx"
-    New-VHD -ComputerName $VMHost -Path $VHDPath -Dynamic -SizeBytes 40GB -ErrorVariable $DiskError | Out-Null
+    New-VHD -ComputerName $VMHost -Path $VHDPath -Dynamic -SizeBytes 40GB
     Add-VMHardDiskDrive -ComputerName $VMHost -VMName $Name -Path $VHDPath
 
-    # Hyper-V generates a mac address, lock it and set it to static
+    # Hyper-V generates a semi-random MacAddress at first boot
+    Start-VM -ComputerName $VMHost -Name $Name
+    Stop-VM -ComputerName $VMHost -Name $Name
     $MacAddress = (Get-VMNetworkAdapter -VMName $Name -ComputerName $VMHost).MacAddress
     Get-VMNetworkAdapter -VMName $Name -ComputerName $VMHost | Set-VMNetworkAdapter -StaticMacAddress $MacAddress
 
