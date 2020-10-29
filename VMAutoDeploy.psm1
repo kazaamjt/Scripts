@@ -52,24 +52,26 @@ function New-AutoDeployVM {
         New-Item -Path "$Path\VM" -ItemType Directory | Out-Null
     } -Args $VMDir
 
-    # Create the virtual hard disk
-    New-VHD -ComputerName $VMHost -Path "$FullPath\VHD\$Name.vhdx" -Dynamic -SizeBytes 40GB -ErrorVariable $DiskError | Out-Null
-
     # Creating the VM with all the required bells and whistles
     New-VM -Name $Name -ComputerName $VMHost `
-        -VHDPath "$VMDir\$Name.vhdx" -Path "$VMDir\VM" `
-        -MemoryStartupBytes $StartUpRam -SwitchName $SwitchName `
-        -Generation 2 -BootDevice "CD" | Out-Null
+    -NoVHD -Path "$VMDir\VM" `
+    -MemoryStartupBytes $StartUpRam -SwitchName $SwitchName `
+    -Generation 2 -BootDevice "CD" | Out-Null
 
     Set-VM -Name $Name -ComputerName $VMHost -ProcessorCount $CPUCount `
-        -AutomaticStartAction $AutomaticStartAction -AutomaticStopAction $AutomaticStopAction `
-        -AutomaticStartDelay $AutomaticStartDelay -Notes $Notes | Out-Null
+    -AutomaticStartAction $AutomaticStartAction -AutomaticStopAction $AutomaticStopAction `
+    -AutomaticStartDelay $AutomaticStartDelay -Notes $Notes | Out-Null
 
     if ($DynamicRam) {
         Set-VM -Name $Name -ComputerName $VMHost -DynamicMemory -MemoryMinimumBytes $MinRam -MemoryMaximumBytes $MaxRam | Out-Null
     }
     Set-VMFirmware -VMName $Name -ComputerName $VMHost -EnableSecureBoot $true -SecureBootTemplate "MicrosoftUEFICertificateAuthority"
     Set-VMDvdDrive -VMName $Name -ComputerName $VMHost -Path $ISOPath
+
+    # Create the virtual hard disk
+    $VHDPath = "$FullPath\VHD\$Name.vhdx"
+    New-VHD -ComputerName $VMHost -Path $VHDPath -Dynamic -SizeBytes 40GB -ErrorVariable $DiskError | Out-Null
+    Add-VMHardDiskDrive -ComputerName $VMHost -VMName $Name -Path $VHDPath
 
     # Hyper-V generates a mac address, lock it and set it to static
     $MacAddress = (Get-VMNetworkAdapter -VMName $Name -ComputerName $VMHost).MacAddress
