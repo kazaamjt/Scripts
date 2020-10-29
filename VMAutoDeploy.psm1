@@ -79,7 +79,7 @@ function New-AutoDeployVM {
 
     # Register the IP in DHCP
     $IPAddress = Get-DhcpServerv4FreeIPAddress -ScopeId $SubnetAddress
-    Add-DhcpServerv4Reservation -IPAddress $IPAddress -ScopeId $DhcpScope -ClientId $MacAddress `
+    Add-DhcpServerv4Reservation -IPAddress $IPAddress -ScopeId $SubnetAddress -ClientId $MacAddress `
         -Name $Name -Description "Auto generated lease for VM autodeploy"
 
     # Register in DNS
