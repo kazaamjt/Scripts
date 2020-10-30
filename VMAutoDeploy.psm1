@@ -101,7 +101,13 @@ function Remove-AutoDeployVM {
         [string]$VMHost
     )
 
+    # Kill the VM if it is running
+    Stop-VM -ComputerName $VMHost -Name $Name -TurnOff -WarningAction SilentlyContinue
+
     # Clean up DNS
+    (Get-DnsServerResourceRecord -RRType Ptr -ZoneName 16.172.in-addr.arpa) `
+        | Where-Object {$_.RecordData.PtrDomainName -eq "$Name.ServerCademy.local"} `
+        | Remove-DnsServerResourceRecord -ZoneName 16.172.in-addr.arpa
     Remove-DnsServerResourceRecord -ZoneName ServerCademy.local -RRType "A" -Name $Name -Force
 
     # Clean up DHCP
