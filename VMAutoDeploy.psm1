@@ -102,18 +102,18 @@ function Remove-AutoDeployVM {
     )
 
     # Clean up DNS
-    Remove-DnsServerResourceRecord -ZoneName ServerCademy.local -RRType "A" -Name $Name
+    Remove-DnsServerResourceRecord -ZoneName ServerCademy.local -RRType "A" -Name $Name -Force
 
     # Clean up DHCP
     $MacAddress = (Get-VMNetworkAdapter -VMName $Name -ComputerName $VMHost).MacAddress
     Remove-DhcpServerv4Filter -MacAddress $MacAddress
     foreach ($Scope in Get-DhcpServerv4Scope) {
-        Remove-DhcpServerv4Lease -ScopeId $Scope.ScopreId -ClientId $MacAddress -ErrorAction SilentlyContinue
-        Remove-DhcpServerv4Reservation -ScopeId $Scope.ScopreId -ClientId $MacAddress -ErrorAction SilentlyContinue
+        Remove-DhcpServerv4Lease -ScopeId $Scope.ScopreId.IPAddressToString -ClientId $MacAddress -ErrorAction SilentlyContinue
+        Remove-DhcpServerv4Reservation -ScopeId $Scope.ScopreId.IPAddressToString -ClientId $MacAddress -ErrorAction SilentlyContinue
     }
 
     # Remove VM
-    Remove-VM -ComputerName $VMHost -Name $Name
+    Remove-VM -ComputerName $VMHost -Name $Name -Force
 
     # Clean up Files
     Invoke-Command -ComputerName $VMHost -ScriptBlock {
