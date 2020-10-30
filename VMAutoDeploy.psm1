@@ -106,8 +106,8 @@ function Remove-AutoDeployVM {
 
     # Clean up DNS
     (Get-DnsServerResourceRecord -RRType Ptr -ZoneName 16.172.in-addr.arpa) `
-        | Where-Object {$_.RecordData.PtrDomainName -eq "$Name.ServerCademy.local"} `
-        | Remove-DnsServerResourceRecord -ZoneName 16.172.in-addr.arpa
+        | Where-Object {$_.RecordData.PtrDomainName -eq "$Name.ServerCademy.local."} `
+        | Remove-DnsServerResourceRecord -ZoneName 16.172.in-addr.arpa -Force
     Remove-DnsServerResourceRecord -ZoneName ServerCademy.local -RRType "A" -Name $Name -Force
 
     # Clean up DHCP
