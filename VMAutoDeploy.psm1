@@ -88,3 +88,36 @@ function New-AutoDeployVM {
     # Register in DNS
     Add-DnsServerResourceRecordA -Name $Name -CreatePtr -AllowUpdateAny -IPv4Address $IPAddress -AgeRecord -ZoneName ServerCademy.local
 }
+
+function Remove-AutoDeployVM {
+    [CmdletBinding()]
+    param (
+        # The name of the machine. Will be the VM name and used to register in the DNS.
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$Name,
+
+        # Specifies the target Hyper-V Server.
+        [Parameter(Mandatory=$true, Position=1)]
+        [string]$VMHost
+    )
+
+    # Clean up DNS
+    Remove-DnsServerResourceRecord -ZoneName ServerCademy.local -RRType "A" -Name $Name
+
+    # Clean up DHCP
+    $MacAddress = (Get-VMNetworkAdapter -VMName $Name -ComputerName $VMHost).MacAddress
+    Remove-DhcpServerv4Filter -MacAddress $MacAddress
+    foreach ($Scope in Get-DhcpServerv4Scope) {
+        Remove-DhcpServerv4Lease -ScopeId $Scope.ScopreId -ClientId $MacAddress -ErrorAction SilentlyContinue
+        Remove-DhcpServerv4Reservation -ScopeId $Scope.ScopreId -ClientId $MacAddress -ErrorAction SilentlyContinue
+    }
+
+    # Remove VM
+    Remove-VM -ComputerName $VMHost -Name $Name
+
+    # Clean up Files
+    Invoke-Command -ComputerName $VMHost -ScriptBlock {
+        param($Name)
+        Remove-Item -Path "D:\AutoDeployVMS\$Name" -Recurse -Force
+    } -Args $Name
+}
