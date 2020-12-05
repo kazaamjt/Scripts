@@ -5,6 +5,10 @@ function New-AutoDeployVM {
         [Parameter(Mandatory=$true, Position=0)]
         [string]$Name,
 
+        # Specifies the target Hyper-V Server.
+        [Parameter(Mandatory=$true, Position=1)]
+        [string]$VMHost,
+
         # Specifies the number of CPU Cores. Defaults to 1.
         [int]$CPUCount=1,
 
