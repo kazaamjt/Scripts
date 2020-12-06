@@ -50,7 +50,7 @@ function New-AutoDeployVM {
     # Set up the required directories
     $VMDir = "$Path\$Name"
     Invoke-Command -ComputerName $VMHost -ScriptBlock {
-        param($Path)
+        param($VMDir)
         New-Item -Path $VMDir -ItemType Directory
         New-Item -Path "$VMDir\VM" -ItemType Directory
     } -Args $VMDir
