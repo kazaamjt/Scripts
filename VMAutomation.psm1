@@ -120,7 +120,10 @@ function Remove-AutoDeployVM {
     $MacAddress = (Get-VMNetworkAdapter -VMName $Name -ComputerName $VMHost).MacAddress
     Remove-DhcpServerv4Filter -MacAddress $MacAddress
     foreach ($Scope in Get-DhcpServerv4Scope) {
-        Remove-DhcpServerv4Reservation -ScopeId $Scope.ScopeId.IPAddressToString -ClientId $MacAddress
+        $Reservation = Get-DhcpServerv4Lease -ScopeId $Scope -ClientId $MacAddress
+        if ($Reservation) {
+            $Reservation | Remove-DhcpServerv4Reservation
+        }
     }
 
     # Remove VM
